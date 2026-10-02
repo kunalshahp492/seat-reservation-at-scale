@@ -5,7 +5,9 @@ import java.util.UUID;
 
 import com.kunalshah.seatreservation.reservation.ReservationDtos.ReservationResult;
 import com.kunalshah.seatreservation.reservation.ReservationDtos.ReserveRequest;
+import com.kunalshah.seatreservation.observability.RequestIdFilter;
 import com.kunalshah.seatreservation.security.JwtService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,8 +31,16 @@ public class ReservationController {
     public ResponseEntity<?> reserve(
             @PathVariable UUID id,
             @AuthenticationPrincipal Jwt jwt,
-            @Valid @RequestBody ReserveRequest request) {
+            @Valid @RequestBody ReserveRequest request,
+            HttpServletRequest httpRequest) {
+        httpRequest.setAttribute(RequestIdFilter.SHOW_ID, id);
         ReservationResult result = service.reserve(id, jwtService.subject(jwt), request);
+        httpRequest.setAttribute(RequestIdFilter.OUTCOME_REASON,
+                result.error() == null ? (result.httpStatus() == 200 ? "idempotent_replay" : "confirmed")
+                        : result.error());
+        if (result.reservation() != null) {
+            httpRequest.setAttribute(RequestIdFilter.RESERVATION_ID, result.reservation().id());
+        }
         Object body = result.reservation() != null
                 ? result.reservation()
                 : Map.of("error", result.error());
@@ -40,7 +50,12 @@ public class ReservationController {
     @PostMapping("/reservations/{id}/cancel")
     public ReservationDtos.ReservationView cancel(
             @PathVariable UUID id,
-            @AuthenticationPrincipal Jwt jwt) {
-        return service.cancel(id, jwtService.subject(jwt));
+            @AuthenticationPrincipal Jwt jwt,
+            HttpServletRequest httpRequest) {
+        httpRequest.setAttribute(RequestIdFilter.RESERVATION_ID, id);
+        ReservationDtos.ReservationView result = service.cancel(id, jwtService.subject(jwt));
+        httpRequest.setAttribute(RequestIdFilter.SHOW_ID, result.showId());
+        httpRequest.setAttribute(RequestIdFilter.OUTCOME_REASON, "cancelled");
+        return result;
     }
 }

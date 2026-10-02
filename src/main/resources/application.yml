@@ -11,6 +11,22 @@ spring:
       maximum-pool-size: 10
   flyway:
     enabled: true
+logging:
+  structured:
+    format:
+      console: ecs
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState,dbReadiness
 jwt:
   secret: ${JWT_SECRET:}
   issuer: seat-reservation
