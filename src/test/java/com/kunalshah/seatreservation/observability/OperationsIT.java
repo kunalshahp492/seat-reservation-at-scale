@@ -73,6 +73,9 @@ class OperationsIT {
                 .header("Authorization", "Bearer " + guestToken));
         assertThat(output.getOut()).contains("\"request_id\":\"" + marker + "\"");
         assertThat(output.getOut()).contains("\"route\":\"/shows/{id}\"");
+        assertThat(output.getOut().lines()
+                .filter(line -> line.contains("\"request_id\":\"" + marker + "\""))
+                .findFirst().orElseThrow()).contains("\"show_id\":\"" + showId + "\"");
         String rejectedMarker = "rejected-" + UUID.randomUUID();
         assertThat(response(get("/shows/{id}", showId)
                 .header("X-Request-Id", rejectedMarker)
