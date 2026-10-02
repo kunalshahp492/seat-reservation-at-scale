@@ -37,3 +37,4 @@ jobs:
           TEST_DB_URL: jdbc:postgresql://localhost:5432/seat_reservation
           TEST_DB_USER: seat
           TEST_DB_PASSWORD: seat
+          JWT_SECRET: 0123456789abcdef0123456789abcdef

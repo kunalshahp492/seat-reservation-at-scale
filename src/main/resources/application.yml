@@ -11,3 +11,7 @@ spring:
       maximum-pool-size: 10
   flyway:
     enabled: true
+jwt:
+  secret: ${JWT_SECRET:}
+  issuer: seat-reservation
+  audience: seat-reservation-api
