@@ -129,6 +129,7 @@ class ReserveIT {
         List<Reply> replies = List.of(
                 reserve(show, user, "", "[\"D1\"]"),
                 reserve(show, user, "   ", "[\"D1\"]"),
+                reserveRaw(show, user, "{\"seats\":[\"D1\"]}"),
                 reserve(show, user, "dup", "[\"D1\",\"D1\"]"),
                 reserve(show, user, "empty", "[]"));
         assertThat(replies).allSatisfy(reply -> assertThat(reply.status()).isEqualTo(400));
@@ -210,6 +211,10 @@ class ReserveIT {
             throws Exception {
         String body = "{\"seats\":" + seats + ",\"idempotency_key\":\""
                 + key + "\"" + (extraJson == null ? "" : "," + extraJson) + "}";
+        return reserveRaw(show, user, body);
+    }
+
+    private Reply reserveRaw(String show, String user, String body) throws Exception {
         MvcResult result = mvc.perform(post("/shows/{id}/reserve", show)
                 .with(jwt().jwt(token -> token.subject(user))
                         .authorities(new SimpleGrantedAuthority("ROLE_USER")))
