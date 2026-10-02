@@ -1,0 +1,13 @@
+server:
+  port: ${PORT:8080}
+spring:
+  application:
+    name: seat-reservation-at-scale
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/seat_reservation}
+    username: ${DB_USER:seat}
+    password: ${DB_PASSWORD:seat}
+    hikari:
+      maximum-pool-size: 10
+  flyway:
+    enabled: true
