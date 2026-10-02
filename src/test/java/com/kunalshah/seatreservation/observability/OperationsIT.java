@@ -67,11 +67,19 @@ class OperationsIT {
         assertThat(sample(metrics, "seats_available", null)).isEqualTo(available);
 
         String marker = "operations-" + UUID.randomUUID();
+        String guestToken = JsonPath.read(response(post("/auth/guest"))
+                .getResponse().getContentAsString(), "$.token");
         response(get("/shows/{id}", showId).header("X-Request-Id", marker)
-                .header("Authorization", "Bearer secret-never-log"));
+                .header("Authorization", "Bearer " + guestToken));
         assertThat(output.getOut()).contains("\"request_id\":\"" + marker + "\"");
         assertThat(output.getOut()).contains("\"route\":\"/shows/{id}\"");
-        assertThat(output.getOut()).doesNotContain("secret-never-log");
+        String rejectedMarker = "rejected-" + UUID.randomUUID();
+        assertThat(response(get("/shows/{id}", showId)
+                .header("X-Request-Id", rejectedMarker)
+                .header("Authorization", "Bearer secret-never-log"))
+                .getResponse().getStatus()).isEqualTo(401);
+        assertThat(output.getOut()).contains("\"request_id\":\"" + rejectedMarker + "\"");
+        assertThat(output.getOut()).doesNotContain(guestToken, "secret-never-log");
     }
 
     private String createShow() throws Exception {
