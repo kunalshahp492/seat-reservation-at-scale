@@ -91,7 +91,60 @@ public class ReservationRepository {
                 reservationId);
     }
 
+    public CancellationTarget cancellationTarget(UUID reservationId) {
+        List<CancellationTarget> rows = jdbc.query(
+                "select show_id, user_id from reservations where id = ?",
+                (rs, rowNum) -> new CancellationTarget(
+                        rs.getObject("show_id", UUID.class), rs.getString("user_id")),
+                reservationId);
+        return rows.isEmpty() ? null : rows.get(0);
+    }
+
+    public List<String> reservationLabels(UUID reservationId) {
+        return jdbc.queryForList(
+                "select seat_label from reservation_seats where reservation_id = ? "
+                        + "order by seat_label",
+                String.class, reservationId);
+    }
+
+    public void lockSeat(UUID showId, String label) {
+        jdbc.queryForObject(
+                "select state from show_seats where show_id = ? and seat_label = ? for update",
+                String.class, showId, label);
+    }
+
+    public String lockReservationState(UUID reservationId) {
+        return jdbc.queryForObject(
+                "select state from reservations where id = ? for update",
+                String.class, reservationId);
+    }
+
+    public int releaseSeat(UUID showId, String label, UUID reservationId) {
+        return jdbc.update(
+                "update show_seats set state = 'AVAILABLE', reservation_id = null "
+                        + "where show_id = ? and seat_label = ? "
+                        + "and state = 'CONFIRMED' and reservation_id = ?",
+                showId, label, reservationId);
+    }
+
+    public int markCancelled(UUID reservationId) {
+        return jdbc.update(
+                "update reservations set state = 'CANCELLED', cancelled_at = now() "
+                        + "where id = ? and state = 'CONFIRMED'",
+                reservationId);
+    }
+
+    public int subtractActiveSeats(UUID showId, String userId, int count) {
+        return jdbc.update(
+                "update show_user_state set active_seat_count = active_seat_count - ? "
+                        + "where show_id = ? and user_id = ? and active_seat_count >= ?",
+                count, showId, userId, count);
+    }
+
     public record ShowPolicy(long pricePaise, int perUserLimit) {
+    }
+
+    public record CancellationTarget(UUID showId, String userId) {
     }
 
     public record ReservationRow(

@@ -107,6 +107,46 @@ public class ReservationService {
                 first.createdAt(), first.cancelledAt());
     }
 
+    @Transactional
+    public ReservationView cancel(UUID reservationId, String userId) {
+        ReservationRepository.CancellationTarget target =
+                reservations.cancellationTarget(reservationId);
+        if (target == null) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "reservation_not_found");
+        }
+        if (!target.userId().equals(userId)) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "not_owner");
+        }
+
+        reservations.lockUserState(target.showId(), userId);
+        List<String> labels = reservations.reservationLabels(reservationId);
+        if (labels.isEmpty()) {
+            throw new IllegalStateException("Reservation has no seat links");
+        }
+        for (String label : labels) {
+            reservations.lockSeat(target.showId(), label);
+        }
+        String state = reservations.lockReservationState(reservationId);
+        if (state.equals("CANCELLED")) {
+            return view(reservationId);
+        }
+        if (!state.equals("CONFIRMED")) {
+            throw new IllegalStateException("Unknown reservation state: " + state);
+        }
+
+        for (String label : labels) {
+            if (reservations.releaseSeat(target.showId(), label, reservationId) != 1) {
+                throw new IllegalStateException("Confirmed reservation lost seat ownership");
+            }
+        }
+        if (reservations.markCancelled(reservationId) != 1
+                || reservations.subtractActiveSeats(
+                        target.showId(), userId, labels.size()) != 1) {
+            throw new IllegalStateException("Cancellation count did not reconcile");
+        }
+        return view(reservationId);
+    }
+
     private static List<String> canonicalSeats(ReserveRequest request) {
         if (request == null || request.idempotencyKey() == null
                 || request.idempotencyKey().isBlank()

@@ -13,11 +13,9 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/shows")
 public class ReservationController {
     private final ReservationService service;
     private final JwtService jwtService;
@@ -27,7 +25,7 @@ public class ReservationController {
         this.jwtService = jwtService;
     }
 
-    @PostMapping("/{id}/reserve")
+    @PostMapping("/shows/{id}/reserve")
     public ResponseEntity<?> reserve(
             @PathVariable UUID id,
             @AuthenticationPrincipal Jwt jwt,
@@ -37,5 +35,12 @@ public class ReservationController {
                 ? result.reservation()
                 : Map.of("error", result.error());
         return ResponseEntity.status(result.httpStatus()).body(body);
+    }
+
+    @PostMapping("/reservations/{id}/cancel")
+    public ReservationDtos.ReservationView cancel(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal Jwt jwt) {
+        return service.cancel(id, jwtService.subject(jwt));
     }
 }
