@@ -55,3 +55,5 @@ jobs:
           curl --fail --silent http://127.0.0.1:8080/health/ready
           admin_jwt=$(python3 scripts/mint_admin_jwt.py)
           java scripts/Burst.java http://127.0.0.1:8080 "$admin_jwt" 24 --smoke
+      - name: Build Docker image
+        run: docker build -t seat-reservation:ci .

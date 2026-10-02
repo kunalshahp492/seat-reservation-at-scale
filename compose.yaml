@@ -1,0 +1,28 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: seat_reservation
+      POSTGRES_USER: seat
+      POSTGRES_PASSWORD: seat
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U seat -d seat_reservation"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  api:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/seat_reservation
+      DB_USER: seat
+      DB_PASSWORD: seat
+      JWT_SECRET: ${JWT_SECRET:?Set a random JWT_SECRET of at least 32 bytes}
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  postgres_data:
