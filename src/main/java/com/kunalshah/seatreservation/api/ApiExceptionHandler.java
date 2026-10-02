@@ -11,6 +11,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
+    @ExceptionHandler(ApiException.class)
+    public ResponseEntity<Map<String, String>> domainError(ApiException error) {
+        return ResponseEntity.status(error.status())
+                .body(Map.of("error", error.error()));
+    }
+
     @ExceptionHandler({MethodArgumentNotValidException.class, HttpMessageNotReadableException.class})
     public ResponseEntity<Map<String, String>> invalidInput(Exception ignored) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
