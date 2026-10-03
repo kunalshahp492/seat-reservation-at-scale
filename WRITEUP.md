@@ -50,6 +50,14 @@ A second 20,000-request live run with the same 64-request in-flight window took 
 
 ## AI usage and follow-up work
 
-I used Codex extensively to discuss requirements, design the transaction, write code and tests, inspect CI failures, and draft documentation. Claims about concurrency and operations are based on the tests and observed runs recorded above; the live throughput claim will be reported separately from the CI smoke. The most valuable human review is the SQL transaction and lock order, followed by the deployment settings and observed live result.
+### How AI was used
+
+I used Codex as an active engineering assistant throughout the assignment. I directed the requirements and selected the key product and architectural constraints: Java 17 with Spring Boot, JWT-based identity, PostgreSQL as the system of record, a four-active-seat limit across all bookings for one user and show, all-or-nothing multi-seat reservations, explicit owner cancellation, and deployment on Render.
+
+Codex contributed substantially to the implementation. It analyzed requirement ambiguities, proposed the database transaction and lock order, generated application and test code, and helped set up Flyway migrations, Docker, GitHub Actions, the burst client, metrics, structured logging, deployment steps, and documentation drafts. It also inspected CI and live-run failures and proposed fixes. I reviewed and approved the requirements and design choices, handled GitHub and Render authorization and credentials, observed the live runs, recorded the logs, and decided which evidence and limitations to include in the submission.
+
+**Directed vs decided:** I directed the system requirements, technology stack, scope, and accepted trade-offs. Codex selected many low-level implementation details within that approved design, including the repository structure, SQL and JDBC mechanics, test organization, CI steps, and diagnostic workflow. I accepted those suggestions only after verification through failing-then-passing tests, PostgreSQL-backed CI, Docker builds, health and metrics checks, concurrency bursts, and a fresh whole-branch review. That review found three issues—cross-collation cancellation lock ordering, fractional numeric coercion, and exception-path logs reporting HTTP 200—and each was fixed with a regression test before the final successful CI run.
+
+The evidence intentionally includes the observed failure. The first 20,000-request live run produced two HTTP 520 responses even though the database state reconciled. A second run of the same size completed with zero 5xx responses. Both results are reported above, and the unresolved free-tier ingress risk remains disclosed.
 
 Next improvements would include a more realistic authentication and ADMIN provisioning path, rate limits around public guest tokens and metric scraping, a dedicated load environment with repeatable latency percentiles, database connection and lock-wait dashboards, PostgreSQL backup/failover drills, and an explicit payment workflow with its own idempotent state machine. Timed holds were excluded from this version, so `held` is always zero.
