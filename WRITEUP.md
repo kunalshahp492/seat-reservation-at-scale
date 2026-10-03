@@ -60,4 +60,11 @@ Codex contributed substantially to the implementation. It analyzed requirement a
 
 The evidence intentionally includes the observed failure. The first 20,000-request live run produced two HTTP 520 responses even though the database state reconciled. A second run of the same size completed with zero 5xx responses. Both results are reported above, and the unresolved free-tier ingress risk remains disclosed.
 
-Next improvements would include a more realistic authentication and ADMIN provisioning path, rate limits around public guest tokens and metric scraping, a dedicated load environment with repeatable latency percentiles, database connection and lock-wait dashboards, PostgreSQL backup/failover drills, and an explicit payment workflow with its own idempotent state machine. Timed holds were excluded from this version, so `held` is always zero.
+### Future scope
+
+- **Kafka-based notifications:** Record `BookingConfirmed` and `BookingFailed` events in a transactional outbox as part of the booking transaction, then publish them to Kafka. Independent consumers can send email, SMS, or mobile push notifications without increasing reservation latency. Idempotent consumers, retries, and a dead-letter topic would prevent duplicate delivery and isolate repeated failures.
+- **Seat holds and payments:** Introduce expiring seat holds and an idempotent payment state machine with webhook handling. Timed holds were excluded from this version, so `held` is always zero.
+- **Production identity and access:** Replace locally minted JWTs with an OAuth2/OIDC provider, controlled ADMIN provisioning, token revocation, and audited role-based access.
+- **Scale and resilience:** Run multiple application instances, add read replicas for availability queries, evaluate partitioning by show or venue, and use multi-zone PostgreSQL with backups, point-in-time recovery, and tested failover.
+- **Traffic protection and observability:** Add rate limits around public guest tokens and metrics, distributed tracing, latency percentiles, connection-pool and lock-wait dashboards, alerts, and service-level objectives.
+- **Performance validation:** Run repeatable load tests from a dedicated environment to remove free-tier hosting and public-ingress variability from application measurements.
