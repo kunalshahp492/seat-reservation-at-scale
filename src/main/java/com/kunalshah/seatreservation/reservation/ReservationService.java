@@ -119,10 +119,11 @@ public class ReservationService {
         }
 
         reservations.lockUserState(target.showId(), userId);
-        List<String> labels = reservations.reservationLabels(reservationId);
+        List<String> labels = new ArrayList<>(reservations.reservationLabels(reservationId));
         if (labels.isEmpty()) {
             throw new IllegalStateException("Reservation has no seat links");
         }
+        labels.sort(String::compareTo);
         for (String label : labels) {
             reservations.lockSeat(target.showId(), label);
         }

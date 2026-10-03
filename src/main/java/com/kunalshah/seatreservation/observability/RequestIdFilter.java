@@ -33,14 +33,19 @@ public class RequestIdFilter extends OncePerRequestFilter {
         response.setHeader("X-Request-Id", requestId);
         long start = System.nanoTime();
         try (MDC.MDCCloseable ignored = MDC.putCloseable("request_id", requestId)) {
+            boolean completed = false;
             try {
                 chain.doFilter(request, response);
+                completed = true;
             } finally {
                 Object pattern = request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
                 String route = pattern == null ? request.getRequestURI() : pattern.toString();
                 MDC.put("route", route);
-                MDC.put("status", Integer.toString(response.getStatus()));
+                MDC.put("status", Integer.toString(completed ? response.getStatus() : 500));
                 MDC.put("latency_ms", Long.toString((System.nanoTime() - start) / 1_000_000));
+                if (!completed && request.getAttribute(OUTCOME_REASON) == null) {
+                    request.setAttribute(OUTCOME_REASON, "internal_error");
+                }
                 copyAttribute(request, OUTCOME_REASON);
                 copyAttribute(request, SHOW_ID);
                 copyAttribute(request, RESERVATION_ID);

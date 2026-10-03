@@ -3,6 +3,9 @@ server:
 spring:
   application:
     name: seat-reservation-at-scale
+  jackson:
+    deserialization:
+      accept-float-as-int: false
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/seat_reservation}
     username: ${DB_USER:seat}

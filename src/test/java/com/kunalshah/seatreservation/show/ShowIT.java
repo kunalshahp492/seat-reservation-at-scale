@@ -73,6 +73,9 @@ class ShowIT {
                 "{\"name\":\"duplicate\",\"seats\":[\"A1\",\"A1\"],\"price_paise\":100}",
                 "{\"name\":\"blank seat\",\"seats\":[\"  \"],\"price_paise\":100}",
                 "{\"name\":\"negative\",\"seats\":[\"A1\"],\"price_paise\":-1}",
+                "{\"name\":\"fractional price\",\"seats\":[\"A1\"],\"price_paise\":125.9}",
+                "{\"name\":\"negative fraction\",\"seats\":[\"A1\"],\"price_paise\":-0.5}",
+                "{\"name\":\"fractional limit\",\"seats\":[\"A1\"],\"price_paise\":100,\"per_user_limit\":2.5}",
                 "{\"name\":\"bad limit\",\"seats\":[\"A1\"],\"price_paise\":100,\"per_user_limit\":0}"
         };
         for (String body : invalid) {
