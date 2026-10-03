@@ -76,4 +76,14 @@ The reservation counters query durable idempotency outcomes and replay counts; `
 
 ## Deployment
 
-The Dockerfile accepts `PORT` (provided by the host) and requires `DB_URL`, `DB_USER`, `DB_PASSWORD`, and `JWT_SECRET`. Configure the host's HTTP health check path as `/health/ready`. The deployment URL and observed live-burst results will be added after deployment verification.
+The live API is at **https://seat-reservation-at-scale-h295.onrender.com**. Its [liveness](https://seat-reservation-at-scale-h295.onrender.com/health/live), [readiness](https://seat-reservation-at-scale-h295.onrender.com/health/ready), and [Prometheus metrics](https://seat-reservation-at-scale-h295.onrender.com/actuator/prometheus) endpoints are public. The [Render application logs](https://dashboard.render.com/web/srv-davrrirtqb8s73dio8i0/logs) require access to the Render workspace; [this short recording](docs/evidence/render-live-logs.mp4) shows the live structured logs under load.
+
+The Dockerfile accepts `PORT` (provided by the host) and requires `DB_URL`, `DB_USER`, `DB_PASSWORD`, and `JWT_SECRET`. The Render web service uses the repository Dockerfile, a Render PostgreSQL 17 database in the same region, and `/health/ready` as its HTTP health check. The free web instance can take 50 seconds or more to wake after idle time. Its free PostgreSQL instance expires on November 1, 2026 unless upgraded.
+
+Run the same one-command burst against the live service with a valid ADMIN JWT:
+
+```powershell
+java scripts/Burst.java https://seat-reservation-at-scale-h295.onrender.com $admin 20000
+```
+
+Provide the ADMIN JWT privately to reviewers when submitting; never commit it. Anyone can obtain guest JWTs from `POST /auth/guest`; ADMIN is needed to create fresh shows for testing. See `WRITEUP.md` for measured live results and limitations.
